@@ -10,6 +10,12 @@ import gym
 import itertools
 from envs.rware.warehouse import Warehouse, RewardType, Action
 
+import sys
+from .pogema.integrations.pettingzoo import PogemaParallel
+local_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, local_dir)
+
+
 envs = Path(os.path.dirname(os.path.realpath(__file__))).glob("**/*_v?.py")
 for e in envs:
     name = e.stem.replace("_", "-")
@@ -117,3 +123,5 @@ REGISTRY["rware"] = Wrapper
 REGISTRY["tj"] = TJ_Wrapper
 REGISTRY["mpe"] = Wrapper
 REGISTRY["pp"] = Wrapper
+
+REGISTRY["pogema"] = PogemaParallel

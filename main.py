@@ -63,7 +63,8 @@ def main(args):
     results_path = os.path.join(dirname(abspath(__file__)), "results")
     args.exp_id = f"{args.map}_{args.agent}_{args.block}_m{args.moduarity}_v{args.vib}_{args.note}"
 
-    if args.use_offline_wandb:
+    # if args.use_offline_wandb:
+    if True:
         os.environ['WANDB_MODE'] = 'dryrun'
 
     tags = ['Ming', args.env, args.map, args.agent, args.memo]
@@ -73,7 +74,7 @@ def main(args):
 
 
     #======================================register environment==============================================
-    env = env_REGISTRY[args.env](env_config) #Wrapper
+    env = env_REGISTRY[args.env](env_config) #Wrapper(env_config)
     
     env_info = env.get_env_info()
     agent_config['obs_shape'] = env_info["obs_shape"]
@@ -238,10 +239,14 @@ if __name__ == '__main__':
     # Env settings
     parser.add_argument('--use_cuda',type=bool, default=False, help='use cuda')
     parser.add_argument('--groups', type=int, nargs='+', default=[3, 3], help='just for ac_att_noise')
-    parser.add_argument('--env', type=str, default='mpe', help='environment name',
+
+    ### CHANGE TO POGEMA (make sure map is not messing anything up)
+    parser.add_argument('--env', type=str, default='pogema', help='environment name',
                         choices=['mpe','lbf','rware','tj'])
     parser.add_argument('--map', type=str, default="mpe-large-spread-v2", help='environment map name',
                         choices=['easy','medium','hard','mpe-large-spread-v2','mpe-large-spread-v3','mpe-simple-tag-v1','Foraging-easy-v0','Foraging-medium-v0','Foraging-hard-v0'])
+    ###---###
+
     parser.add_argument('--time_limit', type=int, default=50, help='time limit')
 
 
