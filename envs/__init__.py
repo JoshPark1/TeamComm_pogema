@@ -11,7 +11,9 @@ import itertools
 from envs.rware.warehouse import Warehouse, RewardType, Action
 
 import sys
-from .pogema.integrations.pettingzoo import PogemaParallel
+# from .pogema.integrations.pettingzoo import PogemaParallel
+from .sync_wrapper_2 import TiecommPettingZoo
+
 local_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, local_dir)
 
@@ -124,4 +126,5 @@ REGISTRY["tj"] = TJ_Wrapper
 REGISTRY["mpe"] = Wrapper
 REGISTRY["pp"] = Wrapper
 
-REGISTRY["pogema"] = PogemaParallel
+# REGISTRY["pogema"] = PogemaParallel
+REGISTRY["syncorsink"] = TiecommPettingZoo

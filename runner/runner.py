@@ -6,6 +6,7 @@ from torch.optim import Adam,RMSprop
 from modules.utils import merge_dict, multinomials_log_density
 import time
 import torch.nn.functional as F
+from termcolor import cprint
 
 import argparse
 
@@ -15,7 +16,7 @@ Transition = namedtuple('Transition', ('action_outs', 'actions', 'rewards', 'val
 class Runner(object):
     def __init__(self, config, env, agent):
 
-        print('PARENT RUNNER CLASS IS INITIALIZED')
+        # print('PARENT RUNNER CLASS IS INITIALIZED')
         self.args = argparse.Namespace(**config)
         self.env = env #Wrapper()
         self.agent = agent #TieCommAgent(agent_config)
@@ -137,15 +138,19 @@ class Runner(object):
     def compute_agent_grad(self, batch):
         log = dict()
         n = self.n_agents
-        batch_size = len(batch.actions)
-
+        # batch_size = len(batch.actions)
+        batch_size = len(batch.actions[0])
+        
+        # cprint(batch.actions, 'green')
 
         rewards = torch.Tensor(np.array(batch.rewards))
-        actions = torch.Tensor(np.array(batch.actions)).transpose(1, 2).view(-1, n, 1)
+        # actions = torch.Tensor(np.array(batch.actions)).transpose(1, 2).view(-1, n, 1)
+        actions = torch.Tensor(np.array(batch.actions)).transpose(1, 2).reshape(-1, n, 1)
         episode_masks = torch.Tensor(np.array(batch.episode_masks))
         episode_agent_masks = torch.Tensor(np.array(batch.episode_agent_masks))
         
         values = torch.cat(batch.values, dim=0).view(batch_size, n)
+
         action_outs = torch.stack(batch.action_outs, dim=0)
 
         returns, advantages = self._compute_returns_advantages(rewards, values, episode_masks, episode_agent_masks)
@@ -206,7 +211,8 @@ class Runner(object):
 
 
     def reset(self):
-        self.env.reset()
+
+        return self.env.reset()
 
 
 

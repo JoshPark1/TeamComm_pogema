@@ -137,15 +137,17 @@ class GodAC(nn.Module):
         self.threshold = self.args.threshold
         self.tanh = nn.Tanh()
 
-        self.fc1_1 = nn.Linear(args.obs_shape * self.n_agents , self.hid_size * 1)
+        # cprint('obs_shape in GodAC ' + str(args.obs_shape), "white", "on_green")
+        self.fc1_1 = nn.Linear(args.obs_shape * self.n_agents , self.hid_size * 1) #(821290x64)
         self.fc1_2 = nn.Linear(self.n_agents**2 , self.hid_size)
         self.fc2 = nn.Linear(self.hid_size *2, self.hid_size)
         self.head = nn.Linear(self.hid_size, 10)
         self.value = nn.Linear(self.hid_size, 1)
-
+        # cprint(type(self.fc1_1), "white", "on_green")
 
     def forward(self, input, graph):
 
+        # cprint(input.shape, "red")
         adj_matrix = torch.tensor(nx.to_numpy_array(graph), dtype=torch.float).view(1, -1)
         h1 = self.tanh(self.fc1_1(input.view(1, -1)))
         h2 = self.tanh(self.fc1_2(adj_matrix))

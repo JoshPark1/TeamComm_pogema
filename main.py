@@ -74,7 +74,11 @@ def main(args):
 
 
     #======================================register environment==============================================
-    env = env_REGISTRY[args.env](env_config) #Wrapper(env_config)
+    env = None
+    if args.env == 'syncorsink':
+        env = env_REGISTRY[args.env](env_config) #PettingZooForageEnv(env_config)
+    else:
+        env = env_REGISTRY[args.env](env_config) #Wrapper(env_config)
     
     env_info = env.get_env_info()
     agent_config['obs_shape'] = env_info["obs_shape"]
@@ -84,8 +88,12 @@ def main(args):
     exp_config['n_agents'] = env_info["n_agents"]
     exp_config['n_actions'] = env_info["n_actions"]
     
+    # cprint(env_info['obs_shape'], 'white', 'on_red')
+    # cprint(agent_config['obs_shape'], 'white', 'on_green')
+
+    
     #--# This goes to init of ticomm.py
-    cprint(args.agent, 'white', 'on_red')
+    # cprint(args.agent, 'white', 'on_red')
     agent = agent_REGISTRY[args.agent](agent_config) #agent = TiecommAgent(agent_config)
     #--#
 
@@ -240,8 +248,8 @@ if __name__ == '__main__':
     parser.add_argument('--use_cuda',type=bool, default=False, help='use cuda')
     parser.add_argument('--groups', type=int, nargs='+', default=[3, 3], help='just for ac_att_noise')
 
-    ### CHANGE TO POGEMA (make sure map is not messing anything up)
-    parser.add_argument('--env', type=str, default='pogema', help='environment name',
+    ### CHANGE TO POGEMA or syncorsink(make sure map is not messing anything up)
+    parser.add_argument('--env', type=str, default='syncorsink', help='environment name',
                         choices=['mpe','lbf','rware','tj'])
     parser.add_argument('--map', type=str, default="mpe-large-spread-v2", help='environment map name',
                         choices=['easy','medium','hard','mpe-large-spread-v2','mpe-large-spread-v3','mpe-simple-tag-v1','Foraging-easy-v0','Foraging-medium-v0','Foraging-hard-v0'])

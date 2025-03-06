@@ -35,7 +35,7 @@ class PogemaParallel(ParallelEnv):
             s[:sz*sz] = np.ndarray.flatten(self.pogema.grid.global_obstacles).astype(float)
         else:
             s[:sz*sz] = np.ndarray.flatten((self.pogema.grid.globally_observed_mask & self.pogema.grid.global_obstacles)).astype(float)
-            cprint(self.pogema.grid, 'white', 'on_red')
+            # cprint(self.pogema.grid, 'white', 'on_red')
 
         for agent in self.possible_agents:
             i = anm[agent]

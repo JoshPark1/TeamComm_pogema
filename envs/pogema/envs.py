@@ -217,7 +217,6 @@ class Pogema(PogemaBase):
         return observations, rewards, terminated, truncated, infos
 
     def _initialize_grid(self):
-        cprint("DOES IT GET HERE?", 'white', 'on_green')
         self.grid: Grid = Grid(grid_config=self.grid_config)
 
     def update_was_on_goal(self):

@@ -6,7 +6,9 @@ from torch.optim import Adam,RMSprop
 from modules.utils import merge_dict, multinomials_log_density
 import time
 from runner import Runner
+from termcolor import cprint
 
+import sys
 import argparse
 
 Transition = namedtuple('Transition', ('action_outs', 'actions', 'rewards', 'values', 'episode_masks', 'episode_agent_masks'))
@@ -42,12 +44,57 @@ class RunnerTiecomm(Runner):
 
     def compute_grad(self, batch):
         log=dict()
+        # cprint(type(batch), 'white', 'on_green')
+        # print('(Transition, Transition)')
+        # print(len(batch))
+        # cprint(type(batch[1]), 'white', 'on_light_green')
+        # print("God_Transition(''god_action_out', 'god_action', 'god_reward', 'god_value', 'episode_masks'')")
+        # cprint(type(batch[1].god_action), 'white', 'on_yellow')
+        # print(batch[1].god_action)
+
+        # cprint(batch, 'white', 'on_red')
+        reformat = self.reformat_batch(batch[0])
+        batch = (reformat, batch[1])
+
         agent_log = self.compute_agent_grad(batch[0])
         god_log = self.compute_god_grad(batch[1])
 
         merge_dict(agent_log, log)
         merge_dict(god_log, log)
         return log
+
+
+    def reformat_batch(self, batch):
+
+        # cprint(type(batch), 'white', 'on_green')
+        # print('(Transition, Transition)')
+        # print(len(batch))
+        # cprint(type(batch[0]), 'white', 'on_light_green')
+        # print("Transition('action_outs', 'actions', 'rewards', 'values', 'episode_masks', 'episode_agent_masks')")
+        # cprint(type(batch[0].actions), 'white', 'on_yellow')
+        # print(batch[0].actions)
+
+
+        # Extract actions from batch (tuple of dictionaries)
+        action_dicts = batch.actions  # This is a tuple of dictionaries
+        
+        # Determine agent keys dynamically
+        agent_keys = sorted(action_dicts[0].keys())  # Ensure consistent ordering
+        
+        # Convert each dictionary to a NumPy array, maintaining the tuple structure
+        formatted_actions = [np.array([[action_dict[agent] for agent in agent_keys] for action_dict in action_dicts])]  # List of length 1
+        
+        # Create a new batch with formatted actions
+        new_batch = Transition(
+            action_outs=batch.action_outs,
+            actions=tuple(formatted_actions),  # Ensure it remains a tuple
+            rewards=batch.rewards,
+            values=batch.values,
+            episode_masks=batch.episode_masks,
+            episode_agent_masks=batch.episode_agent_masks
+        )
+        
+        return new_batch
 
 
 
@@ -73,8 +120,9 @@ class RunnerTiecomm(Runner):
         god_batch_data = []
         batch_log = dict()
         num_episodes = 0
-
+        cprint('batch_size is: ' + str(batch_size), 'white', 'on_red')
         while len(batch_data) < batch_size:
+            cprint('length of batch_data is: ' + str(len(batch_data)), 'white', 'on_red')
             episode_data,episode_log = self.run_an_episode()
             batch_data += episode_data[0]
             god_batch_data += episode_data[1]
@@ -86,6 +134,7 @@ class RunnerTiecomm(Runner):
         batch_data = Transition(*zip(*batch_data))
         god_batch_data = God_Transition(*zip(*god_batch_data))
 
+        # cprint("collect_batch_data complete", "white", 'on_red')
         return (batch_data, god_batch_data), batch_log
 
 
@@ -98,9 +147,12 @@ class RunnerTiecomm(Runner):
 
         self.reset()
         obs = self.env.get_obs()
-
         obs_tensor = torch.tensor(np.array(obs), dtype=torch.float)
         graph = self.env.get_graph()
+
+        # cprint("obs: " + str(len(obs[0])), 'red') 
+        # cprint("obs_tensor shape: " + str(obs_tensor.shape), 'red')
+
         god_action_out, god_value = self.agent.god(obs_tensor, graph)
         god_action = self.choose_action(god_action_out)
         god_action = [god_action[0].reshape(1)]
@@ -114,7 +166,7 @@ class RunnerTiecomm(Runner):
         episode_return = 0
         done = False
         while not done and step <= self.args.episode_length:
-
+            cprint("Step: " + str(step), 'white', 'on_blue')
             obs_tensor = torch.tensor(np.array(obs), dtype=torch.float)
 
             if step % self.interval == 0:
@@ -128,8 +180,14 @@ class RunnerTiecomm(Runner):
             after_comm = self.agent.communicate(obs_tensor, g, set)
             action_outs, values = self.agent.agent(after_comm)
             actions = self.choose_action(action_outs)
-            rewards, done, env_info = self.env.step(actions)
+            actions = self.env.reformat_action(actions)
 
+            # rewards, done, env_info = self.env.step(actions)
+            obs, rewards_pre, terminations, truncations, info = self.env.step(actions)
+            done = self.env.done_adapter(terminations=terminations, truncations=truncations)
+            env_info = self.env.info_adapter(terminations=terminations, truncations=truncations, info=info)
+            
+            rewards = self.env.reformat_rewards(rewards_pre)
             god_reward_list.append(np.mean(rewards).reshape(1))
 
             if step % self.interval == 0:
